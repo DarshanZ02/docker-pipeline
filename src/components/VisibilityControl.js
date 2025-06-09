@@ -16,7 +16,7 @@ export const VisibilityControl = ({setShowCompleted, cleanTasks, isChecked}) => 
                 <label>Show tasks done</label>
             </div>
 
-            <button onClick={handleDelete} className="btn btn-danger btn-sm">Darsh</button>
+            <button onClick={handleDelete} className="btn btn-danger btn-sm">Darshan</button>
         </div>
     );
 };
