@@ -37,4 +37,4 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/react-todo
             docker stop todolist || true
             docker rm todolist || true
-            docker run -d -p 3001:80 --name todolist ${{ secrets.DOCKER_USERNAME }}/react-todo
+            docker run --pull always -d -p 3001:80 --name todolist ${{ secrets.DOCKER_USERNAME }}/react-todo
