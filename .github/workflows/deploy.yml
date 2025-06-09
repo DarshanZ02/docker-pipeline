@@ -1,4 +1,4 @@
-name: Auto Deploy to EC2
+name: Deploy to EC2 on Push
 
 on:
   push:
@@ -10,31 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and Push Docker Image
+      - name: Set up SSH key
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/react-todo .
-          docker push ${{ secrets.DOCKER_USERNAME }}/react-todo
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/react-todo
-            docker stop todolist || true
-            docker rm todolist || true
-            docker run --pull always -d -p 3001:80 --name todolist ${{ secrets.DOCKER_USERNAME }}/react-todo
+      - name: Add EC2 host to known_hosts
+        run: |
+          ssh-keyscan -H ec2-<YOUR-IP>.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+      - name: Deploy Docker container to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ec2-13-60-182-30.eu-north-1.compute.amazonaws.com << 'EOF'
+            docker pull darshan0011/react-todolist
+            docker stop react-todo || true
+            docker rm react-todo || true
+            docker run -d -p 3001:80 --name react-todo darshan0011/react-todolist
+          EOF
